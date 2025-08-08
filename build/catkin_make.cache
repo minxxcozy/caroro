@@ -1,0 +1,2 @@
+cam_driving/cam_driving:caroro_code:morai_msgs
+-DCATKIN_DEVEL_PREFIX=/home/wooin/caroro/devel -DCMAKE_INSTALL_PREFIX=/home/wooin/caroro/install -G Unix Makefiles
