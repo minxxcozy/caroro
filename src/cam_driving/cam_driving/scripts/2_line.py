@@ -239,8 +239,8 @@ class SlidingWindow:
         self.image_pub.publish(sliding_window_msg)
 
         cv2.namedWindow("Sliding Window", cv2.WINDOW_NORMAL)
-        cv2.imshow("Sliding Window", sliding_window_img)
-        cv2.imshow("image", img)
+        # cv2.imshow("Sliding Window", sliding_window_img)
+        # cv2.imshow("image", img)
         cv2.waitKey(1)
     
 

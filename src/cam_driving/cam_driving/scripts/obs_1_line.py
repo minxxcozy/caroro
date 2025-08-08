@@ -27,7 +27,7 @@ class Lane_sub:
         self.steer_msg = Float64()
         self.cross_flag = 0  # 허프라인이 감지된 횟수 (교차로 감지 용도 등)
         self.pid = PID(0.02, 0.001, 0.03)
-        self.steer = 0.39
+
 
 
     # ----------- 콜백 함수 ------------
@@ -52,7 +52,7 @@ class Lane_sub:
         yellow_upper = np.array([40, 255, 255])
         yellow_range = cv2.inRange(img_hsv, yellow_lower, yellow_upper)
 
-        # 흰색 범위 마스크 생성
+        # # 흰색 범위 마스크 생성
         # white_lower = np.array([0, 0, 192])
         # white_upper = np.array([179, 64, 255])
         # white_range = cv2.inRange(img_hsv, white_lower, white_upper)
@@ -82,7 +82,7 @@ class Lane_sub:
 
         # 히스토그램을 통한 차선 위치 분석
         histogram = np.sum(bin_img, axis=0) #세로 방향(높이 방향)으로 합산.
-        left_hist = histogram[0 : x // 2]
+        left_hist = histogram[:]
         right_hist = histogram[x // 2 :]
 
         left_indices = np.where(left_hist > 30)[0] #배열의 인덱스를 반환
@@ -92,26 +92,21 @@ class Lane_sub:
         # ---------------- 차선 위치에 따라 조향 판단 ----------------
         try:
             if len(left_indices) == 0 and len(right_indices) == 0:
-                self.steer = self.steer - 0.0022
-                steer = self.steer
+                center_index = x // 2
                 print("no_line")
                 
             else:
-                center_index = (left_indices[0] + left_indices[-1]) // 2 + x * 0.25
-                standard_line = x // 2  # 화면 중앙 기준선
-                degree_per_pixel = 1 / x
-                steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
-                self.steer = 0.40
+                center_index = (left_indices[0] + left_indices[-1]) // 2 
+                print(f"left_line : {center_index} : {left_indices[1]}, {left_indices[-1]}")
                 print("both_line \n")
 
         except:
-            steer = 0.39
-
-            print("no_line!!!!!!!!!!!!!!!!!")
+            center_index = x // 2
+            print("no_line")
 
         # ---------------- 허프 선 변환을 통한 선 검출 ----------------
         canny_img = cv2.Canny(bin_img, 2, 2)
-        cv2.imshow("canny_img", canny_img)
+        # cv2.imshow("canny_img", canny_img)
 
         lines = cv2.HoughLinesP(bin_img, 1, np.pi/180, 90, 50, 5) #입력 이미지, 거리 해상도, 각도 해상도, 직선인식 최소 임계값, 최소 직선 길이, 직선 사이 최대 간격
         if lines is not None:
@@ -121,8 +116,21 @@ class Lane_sub:
                 self.cross_flag += 1
             # print(self.cross_flag)
 
+        # ---------------- 조향 각 계산 ----------------
+        standard_line = x // 2  # 화면 중앙 기준선
+        degree_per_pixel = 1 / x
+
+        steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
         speed = 1200
-    
+        if(steer < 0.4):
+            steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
+            speed = 1000
+        elif(steer == 0):
+            speed = 500
+            #차선변경때 
+            
+
+        
         print(f"steer : {steer}")
         print(f"speed : {speed}")
 

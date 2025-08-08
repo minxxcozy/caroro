@@ -66,7 +66,7 @@ class Lane_sub:
         # ---------------- 퍼스펙티브 변환 (조감도 시점 만들기)(Bird Width View) ----------------
         # 원본 이미지에서 기준이 되는 4개의 꼭짓점 좌표
         src_points = np.float32([
-            [0, 310], [155, 270], [400, 270], [500, 320]
+            [0, 420], [280, 260], [x - 280, 260], [x, 420]
         ])
         # 조감도 이미지에서 그 4점이 가야 할 위치
         dst_points = np.float32([
@@ -82,7 +82,7 @@ class Lane_sub:
 
         # 히스토그램을 통한 차선 위치 분석
         histogram = np.sum(bin_img, axis=0) #세로 방향(높이 방향)으로 합산.
-        left_hist = histogram[:]
+        left_hist = histogram[0 : x // 2]
         right_hist = histogram[x // 2 :]
 
         left_indices = np.where(left_hist > 30)[0] #배열의 인덱스를 반환
@@ -96,7 +96,7 @@ class Lane_sub:
                 print("no_line")
                 
             else:
-                center_index = (left_indices[0] + left_indices[-1]) // 2 
+                center_index = (left_indices[0] + left_indices[-1]) // 2 + x * 0.27
                 print(f"left_line : {center_index} : {left_indices[1]}, {left_indices[-1]}")
                 print("both_line \n")
 
@@ -106,7 +106,7 @@ class Lane_sub:
 
         # ---------------- 허프 선 변환을 통한 선 검출 ----------------
         canny_img = cv2.Canny(bin_img, 2, 2)
-        cv2.imshow("canny_img", canny_img)
+        # cv2.imshow("canny_img", canny_img)
 
         lines = cv2.HoughLinesP(bin_img, 1, np.pi/180, 90, 50, 5) #입력 이미지, 거리 해상도, 각도 해상도, 직선인식 최소 임계값, 최소 직선 길이, 직선 사이 최대 간격
         if lines is not None:
@@ -123,7 +123,7 @@ class Lane_sub:
         steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
         speed = 1200
         if(steer < 0.4):
-            steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
+            steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)*2.0
             speed = 1000
         elif(steer == 0):
             speed = 500
@@ -142,8 +142,8 @@ class Lane_sub:
         self.cross_flag = 0  # 허프라인 감지 횟수 초기화
 
         # ---------------- 디버깅용 이미지 출력 ----------------
-        cv2.imshow("img", img)
-        cv2.imshow("warped_img", warped_img)
+        # cv2.imshow("img", img)
+        # cv2.imshow("warped_img", warped_img)
         cv2.waitKey(1)
 
 
