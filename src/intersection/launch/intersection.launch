@@ -1,0 +1,10 @@
+<launch>
+
+    <node pkg="intersection" type="left_turn_area.py" name="left_sign_node" />
+
+    <node pkg="intersection" type="intersection.py" name="intersection_sub_node" output="screen" />
+
+    <node pkg="intersection" type="rotary_out_pose.py" name="rotary_out_node"  />
+
+
+</launch>
