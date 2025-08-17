@@ -1,3 +1,0 @@
-[submodule "src/morai_msgs"]
-	path = src/morai_msgs
-	url = https://github.com/minxxcozy/morai_msgs.git
