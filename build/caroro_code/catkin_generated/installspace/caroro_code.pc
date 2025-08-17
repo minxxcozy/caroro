@@ -1,8 +1,0 @@
-prefix=/home/wooin/caroro/install
-
-Name: caroro_code
-Description: Description of caroro_code
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: roscpp rospy sensor_msgs std_msgs

@@ -1,8 +1,0 @@
-prefix=/home/wooin/caroro/install
-
-Name: cam_driving
-Description: Description of cam_driving
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
