@@ -46,7 +46,7 @@ class SlidingWindow:
         white_range = cv2.inRange(hsv, white_lower, white_upper)
 
         combined_range = cv2.bitwise_or(yellow_range, white_range)
-        blend_color = cv2.bitwise_and(img, img, mask=white_range)
+        blend_color = cv2.bitwise_and(img, img, mask=combined_range)
         return blend_color
     
     def img_wrap(self, img, blend_color):
@@ -54,7 +54,7 @@ class SlidingWindow:
         y, x = img.shape[0:2]
 
         src_points = np.float32([
-            [0, 310], [155, 270], [400, 270], [500, 320]
+            [0, 420], [280, 260], [x - 280, 260], [x, 420]
         ])
         # 조감도 이미지에서 그 4점이 가야 할 위치
         dst_points = np.float32([
@@ -177,6 +177,7 @@ class SlidingWindow:
     def cam_CB(self, data):
         img = self.bridge.compressed_imgmsg_to_cv2(data)
         self.nwindows = 10
+        img_center =0
         self.window_height = round(img.shape[0] / self.nwindows)
 
         blend_color = self.detect_color(img)
@@ -195,8 +196,8 @@ class SlidingWindow:
             pixel_offset = center_bottom - (self.img_x*0.75) 
             degree_per_pixel = 1 / self.img_x  # 640이면 1픽셀당 약 0.00156
             steer = 0.5 + (pixel_offset * degree_per_pixel) 
-            if steer > 0.6 :
-                steer = 0.8
+            # if abs(steer - 0.5) > 0.1 : #0813ys
+            #     steer = steer*1.3
         # if center[-1][0] > 0:
         #     center_bottom = center[-1][0] 
         #     img_center = self.img_x // 2
@@ -214,31 +215,36 @@ class SlidingWindow:
 
 
 
-        base_speed = 500  # 기본 속도
+        # base_speed = 500  # 기본 속도
 
-        # 조향 값이 커질수록 속도를 줄이기
-        steer_strength = abs(steer - 0.5) * 2  # 0~1 범위로 정규화된 조향 강도
-        speed_offset = int(steer_strength * 700)  # 감속량 최대 700까지
+        # # 조향 값이 커질수록 속도를 줄이기
+        # steer_strength = abs(steer - 0.5) * 2  # 0~1 범위로 정규화된 조향 강도
+        # speed_offset = int(steer_strength * 700)  # 감속량 최대 700까지
 
-        speed = base_speed - speed_offset
-        speed = max(1200, speed)  # 최소 속도 제한
+        # speed = base_speed - speed_offset
+        # speed = max(1000, speed)  # 최소 속도 제한
+
+        if steer > 0.8:
+            speed = 500
+        else:
+            speed = 1000
 
 
         self.steer_pub.publish(steer)
         self.speed_pub.publish(speed)
 
-        os.system("clear")
-        print(f"center_bottom: {center_bottom}")
-        print(f"img_center: {img_center}")
-        print(f"pixel_offset: {pixel_offset}")
-        print(f"steer: {steer:.3f}")
-        print(f"speed: {speed}")
+        # os.system("clear")
+        # print(f"center_bottom: {center_bottom}")
+        # print(f"img_center: {img_center}")
+        # print(f"pixel_offset: {pixel_offset}")
+        # print(f"steer: {steer:.3f}")
+        # print(f"speed: {speed}")
 
 
         sliding_window_msg = self.bridge.cv2_to_compressed_imgmsg(sliding_window_img)
         self.image_pub.publish(sliding_window_msg)
 
-        cv2.namedWindow("Sliding Window", cv2.WINDOW_NORMAL)
+        # cv2.namedWindow("Sliding Window", cv2.WINDOW_NORMAL)
         # cv2.imshow("Sliding Window", sliding_window_img)
         # cv2.imshow("image", img)
         cv2.waitKey(1)

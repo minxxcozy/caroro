@@ -46,7 +46,7 @@ class SlidingWindow:
         white_range = cv2.inRange(hsv, white_lower, white_upper)
 
         combined_range = cv2.bitwise_or(yellow_range, white_range)
-        blend_color = cv2.bitwise_and(img, img, mask=combined_range)
+        blend_color = cv2.bitwise_and(img, img, mask=white_range)
         return blend_color
     
     def img_wrap(self, img, blend_color):
@@ -54,7 +54,7 @@ class SlidingWindow:
         y, x = img.shape[0:2]
 
         src_points = np.float32([
-            [0, 420], [280, 260], [x - 280, 260], [x, 420]
+            [0, 310], [155, 270], [400, 270], [500, 320]
         ])
         # 조감도 이미지에서 그 4점이 가야 할 위치
         dst_points = np.float32([
@@ -227,12 +227,12 @@ class SlidingWindow:
         self.steer_pub.publish(steer)
         self.speed_pub.publish(speed)
 
-        os.system("clear")
-        print(f"center_bottom: {center_bottom}")
-        print(f"img_center: {img_center}")
-        print(f"pixel_offset: {pixel_offset}")
-        print(f"steer: {steer:.3f}")
-        print(f"speed: {speed}")
+        # os.system("clear")
+        # print(f"center_bottom: {center_bottom}")
+        # print(f"img_center: {img_center}")
+        # print(f"pixel_offset: {pixel_offset}")
+        # print(f"steer: {steer:.3f}")
+        # print(f"speed: {speed}")
 
 
         sliding_window_msg = self.bridge.cv2_to_compressed_imgmsg(sliding_window_img)

@@ -27,12 +27,12 @@ class Lane_sub:
         self.steer_msg = Float64()
         self.cross_flag = 0  # 허프라인이 감지된 횟수 (교차로 감지 용도 등)
         self.pid = PID(0.02, 0.001, 0.03)
-        self.steer = 0.39
+
 
 
     # ----------- 콜백 함수 ------------
     def cam_CB(self, msg):
-        os.system("clear")  # 터미널 화면 초기화
+        # os.system("clear")  # 터미널 화면 초기화
         # 압축 이미지를 OpenCV 형식으로 변환
         img = self.bridge.compressed_imgmsg_to_cv2(msg)
         y, x = img.shape[0:2]  # 이미지 크기 정보 추출(높이h, 너비w)
@@ -52,7 +52,7 @@ class Lane_sub:
         yellow_upper = np.array([40, 255, 255])
         yellow_range = cv2.inRange(img_hsv, yellow_lower, yellow_upper)
 
-        # 흰색 범위 마스크 생성
+        # # 흰색 범위 마스크 생성
         # white_lower = np.array([0, 0, 192])
         # white_upper = np.array([179, 64, 255])
         # white_range = cv2.inRange(img_hsv, white_lower, white_upper)
@@ -66,7 +66,7 @@ class Lane_sub:
         # ---------------- 퍼스펙티브 변환 (조감도 시점 만들기)(Bird Width View) ----------------
         # 원본 이미지에서 기준이 되는 4개의 꼭짓점 좌표
         src_points = np.float32([
-            [0, 310], [155, 270], [400, 270], [500, 320]
+            [0, 420], [280, 260], [x - 280, 260], [x, 420]
         ])
         # 조감도 이미지에서 그 4점이 가야 할 위치
         dst_points = np.float32([
@@ -92,22 +92,17 @@ class Lane_sub:
         # ---------------- 차선 위치에 따라 조향 판단 ----------------
         try:
             if len(left_indices) == 0 and len(right_indices) == 0:
-                self.steer = self.steer - 0.0022
-                steer = self.steer
+                center_index = x // 2
                 print("no_line")
                 
             else:
-                center_index = (left_indices[0] + left_indices[-1]) // 2 + x * 0.25
-                standard_line = x // 2  # 화면 중앙 기준선
-                degree_per_pixel = 1 / x
-                steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
-                self.steer = 0.40
+                center_index = (left_indices[0] + left_indices[-1]) // 2 + x * 0.28
+                print(f"left_line : {center_index} : {left_indices[1]}, {left_indices[-1]}")
                 print("both_line \n")
 
         except:
-            steer = 0.39
-
-            print("no_line!!!!!!!!!!!!!!!!!")
+            center_index = x // 2
+            print("no_line")
 
         # ---------------- 허프 선 변환을 통한 선 검출 ----------------
         canny_img = cv2.Canny(bin_img, 2, 2)
@@ -121,10 +116,22 @@ class Lane_sub:
                 self.cross_flag += 1
             # print(self.cross_flag)
 
-        speed = 1200
-    
-        print(f"steer : {steer}")
-        print(f"speed : {speed}")
+        # ---------------- 조향 각 계산 ----------------
+        standard_line = x // 2  # 화면 중앙 기준선
+        degree_per_pixel = 1 / x
+
+        steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
+        speed = 1000
+        if(steer < 0.4):
+            steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)*2.0
+            print(f"steer : {steer}")
+            # speed = 1000
+        elif(steer == 0):
+            speed = 500
+            #차선변경때 
+        
+        # print(f"steer : {steer}")
+        # print(f"speed : {speed}")
 
         # 속도 및 조향 퍼블리시
         self.steer_msg.data = steer

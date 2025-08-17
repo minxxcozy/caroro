@@ -2,9 +2,10 @@
 # -*- coding:utf-8 -*-
 
 # ROS와 OpenCV 관련 모듈 임포트
+import subprocess
 import rospy
 import cv2
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Int32
 from sensor_msgs.msg import CompressedImage
 from cv_bridge import CvBridge
 import numpy as np
@@ -13,7 +14,8 @@ import os
 
 class Lane_sub:
     def __init__(self):
-        rospy.init_node("land_sub_node")
+        rospy.init_node("lane_sub_node")
+        rospy.Subscriber("/intersection_yellow", Int32, self.intersection_callback)
         rospy.Subscriber("/image_jpeg/compressed", CompressedImage, self.cam_CB)
         
         # 속도 및 조향각 퍼블리셔 설정
@@ -27,12 +29,17 @@ class Lane_sub:
         self.steer_msg = Float64()
         self.cross_flag = 0  # 허프라인이 감지된 횟수 (교차로 감지 용도 등)
         self.pid = PID(0.02, 0.001, 0.03)
+        self.steer = 0.39
 
+        self.intersection_yellow = 0
 
+    def intersection_callback(self, msg):
+        self.intersection_yellow = msg.data
+        
 
     # ----------- 콜백 함수 ------------
     def cam_CB(self, msg):
-        os.system("clear")  # 터미널 화면 초기화
+        # os.system("clear")  # 터미널 화면 초기화
         # 압축 이미지를 OpenCV 형식으로 변환
         img = self.bridge.compressed_imgmsg_to_cv2(msg)
         y, x = img.shape[0:2]  # 이미지 크기 정보 추출(높이h, 너비w)
@@ -41,24 +48,12 @@ class Lane_sub:
         img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         h, s, v = cv2.split(img_hsv)  # 필요 시 개별 채널 사용 가능
         
-        # ----------- HSV  ------------    
-        # H의 임계값 : 0~179 (색상무관)
-        # S의 임계값 : 0~64 (채도가 낮음)
-        # V의 임계값 : 200~255 (명도가 높음)
-
-        
         # 노란색 범위 마스크 생성
         yellow_lower = np.array([15, 128, 0])
         yellow_upper = np.array([40, 255, 255])
         yellow_range = cv2.inRange(img_hsv, yellow_lower, yellow_upper)
 
-        # # 흰색 범위 마스크 생성
-        # white_lower = np.array([0, 0, 192])
-        # white_upper = np.array([179, 64, 255])
-        # white_range = cv2.inRange(img_hsv, white_lower, white_upper)
-
-        # # 노란색과 흰색 마스크 결합
-        # combined_range = cv2.bitwise_or(yellow_range, white_range)
+        yellow_pixel_count = cv2.countNonZero(yellow_range)
 
         # 마스크로 필터링된 이미지 생성
         filtered_img = cv2.bitwise_and(img, img, mask=yellow_range)
@@ -82,27 +77,34 @@ class Lane_sub:
 
         # 히스토그램을 통한 차선 위치 분석
         histogram = np.sum(bin_img, axis=0) #세로 방향(높이 방향)으로 합산.
-        left_hist = histogram[:]
+        left_hist = histogram[0 : x // 2]
         right_hist = histogram[x // 2 :]
 
-        left_indices = np.where(left_hist > 30)[0] #배열의 인덱스를 반환
-        right_indices = np.where(right_hist > 30)[0] + x // 2 # 오른쪽 히스토그램 인덱스는 x // 2를 더해 조정
-        indices = np.where(histogram > 30)[0]
+        left_indices = np.where(left_hist > 20)[0] #배열의 인덱스를 반환
+        right_indices = np.where(right_hist > 20)[0] + x // 2 # 오른쪽 히스토그램 인덱스는 x // 2를 더해 조정
+        indices = np.where(histogram > 20)[0]
 
         # ---------------- 차선 위치에 따라 조향 판단 ----------------
         try:
-            if len(left_indices) == 0 and len(right_indices) == 0:
-                center_index = x // 2
+            if len(indices) == 0 and len(left_indices) == 0:
+                self.steer = self.steer - 0.0042
+                steer = self.steer
                 print("no_line")
                 
             else:
-                center_index = (left_indices[0] + left_indices[-1]) // 2 
-                print(f"left_line : {center_index} : {left_indices[1]}, {left_indices[-1]}")
+                center_index = (indices[0] + indices[-2]) // 2
+                standard_line = x * 0.5
+                degree_per_pixel = 1 / x
+                steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
+                if steer < 0.37:
+                    steer = steer * 0.8
+                self.steer = 0.40
                 print("both_line \n")
 
         except:
-            center_index = x // 2
-            print("no_line")
+            steer = 0.39
+
+            print("no_line!!!!!!!!!!!!!!!!!")
 
         # ---------------- 허프 선 변환을 통한 선 검출 ----------------
         canny_img = cv2.Canny(bin_img, 2, 2)
@@ -115,24 +117,10 @@ class Lane_sub:
                 cv2.line(warped_img, (x1, y1), (x2, y2), (0, 255, 0), 1)
                 self.cross_flag += 1
             # print(self.cross_flag)
-
-        # ---------------- 조향 각 계산 ----------------
-        standard_line = x // 2  # 화면 중앙 기준선
-        degree_per_pixel = 1 / x
-
-        steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
-        speed = 1200
-        if(steer < 0.4):
-            steer = 0.5 + ((center_index - standard_line) * degree_per_pixel)
-            speed = 1000
-        elif(steer == 0):
-            speed = 500
-            #차선변경때 
-            
-
-        
-        print(f"steer : {steer}")
-        print(f"speed : {speed}")
+        speed = 1000
+        if self.intersection_yellow == 11: speed = 200
+        # print(f"steer : {steer}")
+        # print(f"speed : {speed}")
 
         # 속도 및 조향 퍼블리시
         self.steer_msg.data = steer
@@ -169,8 +157,10 @@ class PID:
 # ---------- 메인 함수 ----------
 def main():
     try:
-        lane_sub = Lane_sub()  # 클래스 인스턴스 생성
-        rospy.spin()           # ROS 노드 계속 실행
+        lane_sub = Lane_sub() 
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            rate.sleep()
     except rospy.ROSInterruptException:
         pass
 
