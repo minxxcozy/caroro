@@ -61,22 +61,6 @@ source devel/setup.bash
 roslaunch
 ```
 
-
-## 📂 Directory Structure
-```
-caroro/
- ├── src/
- │   ├── rotary/         # Rotary mission handling
- │   ├── stopline/       # Stop line detection
- │   ├── obstacle/       # Obstacle avoidance logic
- │   ├── wego_2d_nav/    # Navigation stack
- │   └── ...
- ├── launch/             # Launch files
- ├── config/             # Parameter configs
- └── README.md
-```
-
-
 ## 👥 Team Members
 This project is developed by students from **Kookmin University, College of Automotive Engineering** :
 - Yeonsil Kang  
