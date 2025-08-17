@@ -82,5 +82,5 @@ This project is developed by students from **Kookmin University, College of Auto
 - Yeonsil Kang  
 - Minchae Kim  
 - Woo In Jang  
-- Hyunjung Jang  
+- Hyeonjeong Jang  
 - Heewon Choi  
