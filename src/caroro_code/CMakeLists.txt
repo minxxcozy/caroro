@@ -35,8 +35,8 @@ target_link_libraries(convert_lidar ${catkin_LIBRARIES})
 
 catkin_install_python(PROGRAMS
   scripts/final.py
-  scripts/rotary.py
   scripts/obstacle_avoid.py
+  scripts/rotary_mission.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

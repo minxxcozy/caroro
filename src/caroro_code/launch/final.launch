@@ -1,0 +1,8 @@
+<launch>
+
+    <node pkg="caroro_code" type="final.py" name="caroro_mission_controller" output="screen" />
+
+    <node pkg="caroro_code" type="traffic_one.py" name="traffic_signal_publisher"/>
+
+    <node pkg="caroro_code" type="rotary_mission.py" name="rotary_node"  />
+</launch>

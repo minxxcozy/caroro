@@ -51,7 +51,7 @@ class LidarConvert : public ros::NodeHandle
 
 int main(int argc, char ** argv) 
 {
-    ros::init(argc, argv, "lidar_convert");
+    ros::init(argc, argv, "convert_lidar");
 
     auto lidar_convert = make_shared<LidarConvert>();
 
