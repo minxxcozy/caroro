@@ -9,7 +9,7 @@ local_costmap:
   height: 4.5
   resolution: 0.08
   transform_tolerance: 0.5
-  inflation_radius: 0.15
+  #inflation_radius: 0.15
 
   obstacle_layer:
     enabled: true

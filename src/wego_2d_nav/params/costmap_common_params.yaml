@@ -9,8 +9,8 @@ map_type: costmap
 inflation_layer:
   enabled: true
   cost_scaling_factor: 12.0
-  inflation_radius: 0.15
+  inflation_radius: 0.25
   inflation_unknow: true
 static_layer:
   enabled: true
-  map_topic: "/map"   
+  map_topic: "/map" 

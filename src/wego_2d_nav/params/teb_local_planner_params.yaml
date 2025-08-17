@@ -14,11 +14,11 @@ TebLocalPlannerROS:
     
  # Robot
          
- max_vel_x: 2.2
+ max_vel_x: 2.2 # 기존 : 2.2 (최대 전진 속도) -> 1.5 -> 1.0 -> 0.7
  max_vel_x_backwards: 2.0
  max_vel_theta: 1.3
- acc_lim_x: 0.7
- acc_lim_theta: 1.7
+ acc_lim_x: 0.7       # 전진 가속도 제한
+ acc_lim_theta: 1.9   # 기존 : 1.7 (회전 가속도 제한) -> 1.9
  #max steering angle = 19.5 deg: r=wheelbase/tan(max_steer_angle)
  min_turning_radius: 0.6
  wheelbase: 0.26
@@ -42,13 +42,13 @@ TebLocalPlannerROS:
     
  # Obstacles
     
- min_obstacle_dist: 0.17
+ min_obstacle_dist: 0.23    # 기존 : 0.17 (물체 최소 감지 거리) -> 0.2 -> 0.185 -> 0.3 -> 0.23
  include_costmap_obstacles: True
  costmap_obstacles_behind_robot_dist: 1.0
  obstacle_poses_affected: 30
- costmap_converter_plugin: "costmap_converter::CostmapToPolygonsDBSMCCH"
+ costmap_converter_plugin: "costmap_converter::CostmapToDynamicObstacles" # 기존 : "costmap_converter::CostmapToPolygonsDBSMCCH"
  costmap_converter_spin_thread: True
- costmap_converter_rate: 5
+ costmap_converter_rate: 10      # 기존 : 5 (동적 장애물 정보 전달) -> 8 -> 10
 
  # Optimization
     
@@ -64,9 +64,9 @@ TebLocalPlannerROS:
  weight_kinematics_nh: 1000
  weight_kinematics_forward_drive: 1
  weight_kinematics_turning_radius: 1
- weight_optimaltime: 3
- weight_obstacle: 70
- weight_dynamic_obstacle: 10 # not in use yet
+ weight_optimaltime: 3        # 기존 : 3 (총 이동 시간 최소화) -> 10 -> 5 -> 3
+ weight_obstacle: 120          # 기존 : 70 (정적 장애물 회피 가중치) -> 100 -> 120
+ weight_dynamic_obstacle: 200 # 기존 : 10 (동적 장애물 회피 가중치) -> 100 -> 300 -> 100 ->  130 -> 170 -> 200
  alternative_time_cost: False # not in use yet
 
  # Homotopy Class Planner
